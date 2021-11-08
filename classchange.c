@@ -1,11 +1,10 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
-//#include <unistd.h>
+#include <string.h>
 
 long get_seconds_left(time_t ts, struct tm *now) {
 	struct tm *tm;
-
 	if (now->tm_wday == 3) {
 		int schedule[10][3] = {
 
@@ -80,21 +79,33 @@ long get_seconds_left(time_t ts, struct tm *now) {
 	}
 }
 
-int main(void) {
+int main(int argc, char *argv[]) {
 	time_t ts = time(NULL); // time_t for now
 	struct tm *now = localtime(&ts); // localtime tm struct based on ts
+
+	if (argc > 1) {
+		if (strcmp(argv[1], "-w") == 0 || strcmp(argv[1], "--wednesday") == 0) {
+			now->tm_wday = 3; // manually set day to wednesday in case schedule is wack
+		} else if (strcmp(argv[1], "-n") == 0 || strcmp(argv[1], "--normal") == 0) {
+			now->tm_wday = 1; // manually set day to normal day (here monday) in case schedule is wack
+		}
+	}
 
 	if (1 <= now->tm_wday && now->tm_wday <= 5) { // if weekday and school is not over
 		long secondsleft = get_seconds_left(ts, now);
 
 		if (secondsleft != -1) {
 			if (secondsleft == 30)
-				system("rofi -e '\n	class ends in 30s\n' > /dev/null");
+				system("/usr/bin/notify-send 'class timer' 'class ends in 30s' > /dev/null");
 
 			int minute = secondsleft / 60;
 			int seconds = secondsleft % 60;
 
-			printf("%d:%d", minute, seconds);
+			if (now->tm_wday == 3) {
+				printf("%d:%d [wed]", minute, seconds);
+			} else {
+				printf("%d:%d", minute, seconds);
+			}
 		} else {
 			printf("[school is over today]");
 		}

@@ -1,7 +1,7 @@
-CFLAGS=-O2 -Wall -Wextra -lX11 -lpci
+CFLAGS=-O3 -Wall -Wextra -lX11 -lpci
 PREFIX=$(HOME)/.local
 
-all: classchange
+all: classchange install
 
 classchange: classchange.c
 	$(CC) classchange.c -o classchange $(CFLAGS)
