@@ -102,9 +102,9 @@ int main(int argc, char *argv[]) {
 			int seconds = secondsleft % 60;
 
 			if (now->tm_wday == 3) {
-				printf("%d:%d [wed]", minute, seconds);
+				printf(" %d:%d [wed]", minute, seconds);
 			} else {
-				printf("%d:%d", minute, seconds);
+				printf(" %d:%d", minute, seconds);
 			}
 		} else {
 			printf("[school is over today]");
