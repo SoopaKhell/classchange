@@ -106,10 +106,10 @@ int main(int argc, char *argv[]) {
 			} else {
 				printf(" %d:%d", minute, seconds);
 			}
-		} else {
-			printf("[school is over today]");
-		}
-	} else {
-		printf("[there is no school today]");
+		} //else {
+		//	printf(" [school is over today]");
+		//}
+	//} else {
+		//printf(" [there is no school today]");
 	}
 }
