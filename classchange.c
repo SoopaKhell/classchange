@@ -5,19 +5,13 @@
 
 long get_seconds_left(time_t ts, struct tm *now) {
 	struct tm *tm;
-	if (now->tm_wday == 3) {
+	if (now->tm_wday == 2 || now->tm_wday == 4) { // 
 		int schedule[10][3] = {
 
-			{8,12,00},  // go to math
-			{9,12,00},  // go to bio
-			{10,04,00}, // go to TOK
-			{10,56,00}, // go to homeroom
-			{11,31,00}, // go to HOA
-			{12,27,00}, // go to lunch
-			{12,55,00}, // go to lit
-			{13,47,00}, // go to psych
-			{14,39,00}, // go to spanish
-			{15,32,12}  // go home
+			{14,20,00},
+			{15,35,00},
+			{17,30,00},
+			{18,45,00},
 
 		};
 
@@ -41,19 +35,46 @@ long get_seconds_left(time_t ts, struct tm *now) {
 
 		return seconds_left;
 
-	} else {
+	} else if (now->tm_wday == 1 || now->tm_wday == 3 || now->tm_wday == 5) { // monday wed friday
 		int schedule[9][3] = {
+			{9,10,00},
+			{10,00,00},
+			{10,20,00},
+			{11,10,00},
+			{12,40,00},
+			{13,30,00},
+			{15,00,00},
+			{15,50,00},
+		};            
 
-			{8,12,00},  // go to math
-			{9,17,00},  // go to bio
-			{10,14,00}, // go to TOK
-			{11,11,00}, // go to HOA
-			{12,11,00}, // go to lunch
-			{12,41,00}, // go to lit
-			{13,38,00}, // go to psych
-			{14,35,00}, // go to spanish
-			{15,32,20}  // go home
+		long int seconds_left = 0;
+		for (int i = 0; i < sizeof(schedule); i++) {
+			if ((tm = localtime(&ts))) {
+				tm->tm_hour = schedule[i][0];
+				tm->tm_min  = schedule[i][1];
+				tm->tm_sec  = schedule[i][2];
 
+				seconds_left = mktime(tm) - ts;
+
+				//it doesnt work because each time we go to the next element it will return a negative number if we've already passed that time 0
+
+				if (seconds_left > 0)
+					break;
+			}
+		}
+
+		if (seconds_left > 100000)
+			return -1;
+
+		return seconds_left;
+	} else if (now->tm_wday == 1) { // monday wed friday
+		int schedule[6][3] = {
+			{10,20,00},
+			{11,10,00},
+			{12,40,00},
+			{13,30,00},
+			{14,00,00},
+			{15,50,00},
 		};            
 
 		long int seconds_left = 0;
@@ -95,21 +116,18 @@ int main(int argc, char *argv[]) {
 		long secondsleft = get_seconds_left(ts, now);
 
 		if (secondsleft != -1) {
+			printf(" ");
+			
 			if (secondsleft == 30)
-				system("/usr/bin/notify-send 'class timer' 'class ends in 30s' > /dev/null");
+				system("/usr/bin/notify-send 'class timer' '30 seconds until classchange' > /dev/null");
+			
+			if (secondsleft == 1200)
+				system("/usr/bin/notify-send 'class timer' '20 minutes until classchange' > /dev/null");
 
 			int minute = secondsleft / 60;
 			int seconds = secondsleft % 60;
 
-			if (now->tm_wday == 3) {
-				printf(" %d:%d [wed]", minute, seconds);
-			} else {
-				printf(" %d:%d", minute, seconds);
-			}
-		} //else {
-		//	printf(" [school is over today]");
-		//}
-	//} else {
-		//printf(" [there is no school today]");
+			printf("%d:%d", minute, seconds);
+		}
 	}
 }
