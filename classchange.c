@@ -6,7 +6,7 @@
 long get_seconds_left(time_t ts, struct tm *now) {
 	struct tm *tm;
 	if (now->tm_wday == 2 || now->tm_wday == 4) { // 
-		int schedule[10][3] = {
+		int schedule[4][3] = {
 
 			{14,20,00},
 			{15,35,00},
@@ -36,9 +36,7 @@ long get_seconds_left(time_t ts, struct tm *now) {
 		return seconds_left;
 
 	} else if (now->tm_wday == 3 || now->tm_wday == 5) { // monday wed friday
-		int schedule[9][3] = {
-			{9,10,00},
-			{10,00,00},
+		int schedule[6][3] = {
 			{10,20,00},
 			{11,10,00},
 			{12,40,00},
@@ -67,8 +65,10 @@ long get_seconds_left(time_t ts, struct tm *now) {
 			return -1;
 
 		return seconds_left;
-	} else if (now->tm_wday == 1) { // monday wed friday
-		int schedule[6][3] = {
+	} else if (now->tm_wday == 1) { // monday
+		int schedule[8][3] = {
+			 {9,10,00},
+			{10,00,00},
 			{10,20,00},
 			{11,10,00},
 			{12,40,00},
