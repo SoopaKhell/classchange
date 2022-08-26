@@ -126,8 +126,11 @@ int main(int argc, char *argv[]) {
 
 			int minute = secondsleft / 60;
 			int seconds = secondsleft % 60;
-
-			printf("%02d:%02d", minute, seconds);
+			int hour = minute / 60;
+			if (minute > 59) {
+				minute = minute-(60*hour);
+			}
+			printf("%02d:%02d:%02d", hour, minute, seconds);
 		}
 	}
 }
