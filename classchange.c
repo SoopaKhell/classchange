@@ -35,7 +35,7 @@ long get_seconds_left(time_t ts, struct tm *now) {
 
 		return seconds_left;
 
-	} else if (now->tm_wday == 1 || now->tm_wday == 3 || now->tm_wday == 5) { // monday wed friday
+	} else if (now->tm_wday == 3 || now->tm_wday == 5) { // monday wed friday
 		int schedule[9][3] = {
 			{9,10,00},
 			{10,00,00},
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
 			int minute = secondsleft / 60;
 			int seconds = secondsleft % 60;
 
-			printf("%d:%d", minute, seconds);
+			printf("%02d:%02d", minute, seconds);
 		}
 	}
 }
