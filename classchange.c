@@ -5,13 +5,14 @@
 
 long get_seconds_left(time_t ts, struct tm *now) {
 	struct tm *tm;
-	if (now->tm_wday == 2 || now->tm_wday == 4) { // 
-		int schedule[4][3] = {
+	if (now->tm_wday == 2 || now->tm_wday == 4) { // tuesday thursday
+		int schedule[5][3] = {
 
 			{14,20,00},
 			{15,35,00},
 			{17,30,00},
 			{18,45,00},
+			{23,59,59},
 
 		};
 
@@ -35,14 +36,15 @@ long get_seconds_left(time_t ts, struct tm *now) {
 
 		return seconds_left;
 
-	} else if (now->tm_wday == 3 || now->tm_wday == 5) { // monday wed friday
-		int schedule[6][3] = {
+	} else if (now->tm_wday == 3 || now->tm_wday == 5) { // wed friday
+		int schedule[7][3] = {
 			{10,20,00},
 			{11,10,00},
 			{12,40,00},
 			{13,30,00},
 			{15,00,00},
 			{15,50,00},
+			{23,59,59},
 		};            
 
 		long int seconds_left = 0;
@@ -66,15 +68,16 @@ long get_seconds_left(time_t ts, struct tm *now) {
 
 		return seconds_left;
 	} else if (now->tm_wday == 1) { // monday
-		int schedule[8][3] = {
+		int schedule[9][3] = {
 			 {9,10,00},
 			{10,00,00},
 			{10,20,00},
 			{11,10,00},
 			{12,40,00},
 			{13,30,00},
-			{14,00,00},
+			{15,00,00},
 			{15,50,00},
+			{23,59,59},
 		};            
 
 		long int seconds_left = 0;
@@ -119,10 +122,10 @@ int main(int argc, char *argv[]) {
 			printf(" ");
 			
 			if (secondsleft == 30)
-				system("/usr/bin/notify-send 'class timer' '30 seconds until classchange' > /dev/null");
+				system("/usr/bin/notify-send 'pack up' '30 seconds until classchange' > /dev/null");
 			
-			if (secondsleft == 1200)
-				system("/usr/bin/notify-send 'class timer' '20 minutes until classchange' > /dev/null");
+			if (secondsleft == 900)
+				system("/usr/bin/notify-send 'go now' '15 minutes until classchange' > /dev/null");
 
 			int minute = secondsleft / 60;
 			int seconds = secondsleft % 60;
