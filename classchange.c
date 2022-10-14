@@ -36,7 +36,7 @@ long get_seconds_left(time_t ts, struct tm *now) {
 
 		return seconds_left;
 
-	} else if (now->tm_wday == 3 || now->tm_wday == 5) { // wed friday
+	} else if (now->tm_wday == 3) { // wed friday
 		int schedule[7][3] = {
 			{10,20,00},
 			{11,10,00},
@@ -78,6 +78,36 @@ long get_seconds_left(time_t ts, struct tm *now) {
 			{15,00,00},
 			{15,50,00},
 			{23,59,59},
+		};            
+
+		long int seconds_left = 0;
+		for (int i = 0; i < sizeof(schedule); i++) {
+			if ((tm = localtime(&ts))) {
+				tm->tm_hour = schedule[i][0];
+				tm->tm_min  = schedule[i][1];
+				tm->tm_sec  = schedule[i][2];
+
+				seconds_left = mktime(tm) - ts;
+
+				//it doesnt work because each time we go to the next element it will return a negative number if we've already passed that time 0
+
+				if (seconds_left > 0)
+					break;
+			}
+		}
+
+		if (seconds_left > 100000)
+			return -1;
+
+		return seconds_left;
+	} else if (now->tm_wday == 5) { // monday
+		int schedule[9][3] = {
+			{10,20,00},
+			{11,10,00},
+			{12,40,00},
+			{13,30,00},
+			{15,00,00},
+			{15,50,00},
 		};            
 
 		long int seconds_left = 0;
