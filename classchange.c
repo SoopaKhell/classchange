@@ -56,7 +56,7 @@ void send_notification(const char *title, const char *message) {
     system(command);
 }
 
-int main(int argc, char *argv[]) {
+int main() {
     time_t ts = time(NULL);
     struct tm *now = localtime(&ts);
 
