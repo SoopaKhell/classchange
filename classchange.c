@@ -3,45 +3,76 @@
 #include <stdlib.h>
 #include <string.h>
 
-int mon_schedule[6][3] = {
-    {10, 20, 00},
-    {11, 10, 00},
-    {12, 40, 00},
-    {13, 30, 00},
-    {15, 00, 00},
-    {15, 50, 00},
-};
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
 
-char *mon_classes[] = {"MATH", "MATH", "POLS", "POLS", "LING", "LING"};
+#define MAX_CLASSES 8
+#define MAX_DAY_NAME 4
 
-int tue_thu_schedule[8][3] = {
-    {9, 35, 00},
-    {10, 50, 00},
-    {11, 10, 00},
-    {12, 25, 00},
-    {14, 20, 00},
-    {15, 10, 00},
-    {15, 55, 00},
-    {17, 10, 00},
-};
+typedef struct {
+    int hour;
+    int minute;
+    int second;
+    char class_name[50];
+} Class;
 
-char *tue_thu_classes[] = {"MATH", "MATH", "CSCI", "CSCI", "POLS", "POLS", "CSCI", "CSCI"};
+typedef struct {
+    char day_name[MAX_DAY_NAME];
+    Class classes[MAX_CLASSES];
+    int num_classes;
+} DaySchedule;
 
-int wed_fri_schedule[2][3] = {
-    {15, 00, 00},
-    {15, 50, 00},
-};
+DaySchedule schedule[5];
 
-char *wed_fri_classes[] = {"LING", "LING"};
+void load_schedule(const char* filename) {
+    char path[PATH_MAX];
+    if (filename[0] == '~') {
+        snprintf(path, PATH_MAX, "%s%s", getenv("HOME"), filename+1);
+    } else {
+        strncpy(path, filename, PATH_MAX);
+    }
 
-long get_seconds_left(int schedule[][3], int schedule_length, time_t ts, int *class_index) {
+    FILE* file = fopen(path, "r");
+    if (!file) {
+        perror("Failed to open schedule file");
+        exit(EXIT_FAILURE);
+    }
+
+    char line[256];
+    int dayIndex = 0;
+    while (fgets(line, sizeof(line), file)) {
+        DaySchedule day_schedule;
+        char* token = strtok(line, ":");
+        strncpy(day_schedule.day_name, token, MAX_DAY_NAME);
+        day_schedule.num_classes = 0;
+
+        token = strtok(NULL, ",");
+        while (token) {
+            sscanf(token, "%d:%d:%d-%s",
+                   &day_schedule.classes[day_schedule.num_classes].hour,
+                   &day_schedule.classes[day_schedule.num_classes].minute,
+                   &day_schedule.classes[day_schedule.num_classes].second,
+                   day_schedule.classes[day_schedule.num_classes].class_name);
+
+            day_schedule.num_classes++;
+            token = strtok(NULL, ",");
+        }
+
+        memcpy(&schedule[dayIndex++], &day_schedule, sizeof(DaySchedule));
+    }
+
+    fclose(file);
+}
+
+long get_seconds_left(DaySchedule day_schedule, time_t ts, int *class_index) {
     struct tm *tm;
     long int seconds_left = 0;
-    for (int i = 0; i < schedule_length; i++) {
+    for (int i = 0; i < day_schedule.num_classes; i++) {
         if ((tm = localtime(&ts))) {
-            tm->tm_hour = schedule[i][0];
-            tm->tm_min = schedule[i][1];
-            tm->tm_sec = schedule[i][2];
+            tm->tm_hour = day_schedule.classes[i].hour;
+            tm->tm_min = day_schedule.classes[i].minute;
+            tm->tm_sec = day_schedule.classes[i].second;
 
             seconds_left = mktime(tm) - ts;
 
@@ -65,27 +96,28 @@ void send_notification(const char *title, const char *message) {
 }
 
 int main() {
+    load_schedule("~/.config/classchange/schedule.cfg");
     time_t ts = time(NULL);
     struct tm *now = localtime(&ts);
 
     long seconds_left = -1;
     int class_index = -1;
-    char **classes = NULL;
 
     switch (now->tm_wday) {
         case 1: // Monday
-            seconds_left = get_seconds_left(mon_schedule, 6, ts, &class_index);
-            classes = mon_classes;
+            seconds_left = get_seconds_left(schedule[0], ts, &class_index);
             break;
         case 2: // Tuesday
-        case 4: // Thursday
-            seconds_left = get_seconds_left(tue_thu_schedule, 8, ts, &class_index);
-            classes = tue_thu_classes;
+            seconds_left = get_seconds_left(schedule[1], ts, &class_index);
             break;
         case 3: // Wednesday
+            seconds_left = get_seconds_left(schedule[2], ts, &class_index);
+            break;
+        case 4: // Thursday
+            seconds_left = get_seconds_left(schedule[3], ts, &class_index);
+            break;
         case 5: // Friday
-            seconds_left = get_seconds_left(wed_fri_schedule, 2, ts, &class_index);
-            classes = wed_fri_classes;
+            seconds_left = get_seconds_left(schedule[4], ts, &class_index);
             break;
     }
 
@@ -102,7 +134,7 @@ int main() {
         if (minute > 59) {
             minute = minute - (60 * hour);
         }
-        printf("%s (%02d:%02d:%02d)\n", classes[class_index], hour, minute, seconds);
+        printf("%s (%02d:%02d:%02d)\n", schedule[now->tm_wday - 1].classes[class_index].class_name, hour, minute, seconds);
     }
 
     return 0;
