@@ -1,4 +1,4 @@
-CFLAGS=-O3 -Wall -Wextra -lX11 -lpci
+CFLAGS=-O3 -Wall -Wextra
 PREFIX=$(HOME)/.local
 
 all: classchange install
