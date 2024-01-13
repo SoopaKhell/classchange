@@ -2,7 +2,6 @@
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
 
 #ifndef PATH_MAX
 #define PATH_MAX 4096
@@ -66,38 +65,26 @@ void load_schedule(const char* filename) {
     fclose(file);
 }
 
-long get_seconds_left(DaySchedule day_schedule, time_t ts, int *class_index, int is_next_day) {
+long get_seconds_left(DaySchedule day_schedule, time_t ts, int *class_index) {
     struct tm *tm;
-    long int seconds_left = LONG_MAX;
-    int found = 0;
-
+    long int seconds_left = 0;
     for (int i = 0; i < day_schedule.num_classes; i++) {
         if ((tm = localtime(&ts))) {
             tm->tm_hour = day_schedule.classes[i].hour;
             tm->tm_min = day_schedule.classes[i].minute;
             tm->tm_sec = day_schedule.classes[i].second;
 
-            time_t class_time = mktime(tm);
+            seconds_left = mktime(tm) - ts;
 
-            if (class_time - ts > 0 && class_time - ts < seconds_left) {
-                seconds_left = class_time - ts;
+            if (seconds_left > 0) {
                 *class_index = i;
-                found = 1;
+                break;
             }
         }
     }
 
-    if (is_next_day && !found) {
-        *class_index = 0;
-        if ((tm = localtime(&ts))) {
-            tm->tm_hour = day_schedule.classes[0].hour;
-            tm->tm_min = day_schedule.classes[0].minute;
-            tm->tm_sec = day_schedule.classes[0].second;
-            tm->tm_mday += 1;
-
-            seconds_left = mktime(tm) - ts;
-        }
-    }
+    if (seconds_left > 100000)
+        return -1;
 
     return seconds_left;
 }
@@ -108,6 +95,10 @@ void send_notification(const char *title, const char *message) {
     system(command);
 }
 
+int get_next_day_index(int current_day) {
+    return (current_day % 7);
+}
+
 int main() {
     load_schedule("~/.config/classchange/schedule.cfg");
     time_t ts = time(NULL);
@@ -115,21 +106,27 @@ int main() {
 
     long seconds_left = -1;
     int class_index = -1;
-    int is_next_day = 0;
+    int current_day_index = now->tm_wday - 1;
 
-    int last_class_index = schedule[now->tm_wday - 1].num_classes - 1;
-    struct tm last_class_tm = *now;
-    last_class_tm.tm_hour = schedule[now->tm_wday - 1].classes[last_class_index].hour;
-    last_class_tm.tm_min = schedule[now->tm_wday - 1].classes[last_class_index].minute;
-    last_class_tm.tm_sec = schedule[now->tm_wday - 1].classes[last_class_index].second;
-    time_t last_class_time = mktime(&last_class_tm);
-
-    if (difftime(ts, last_class_time) > 0) {
-        is_next_day = 1;
-        now->tm_wday = (now->tm_wday % 5) + 1;
+    if (current_day_index >= 0 && current_day_index < 5) {
+        seconds_left = get_seconds_left(schedule[current_day_index], ts, &class_index);
     }
 
-    seconds_left = get_seconds_left(schedule[now->tm_wday - 1], ts, &class_index, is_next_day);
+    if (seconds_left == -1 || current_day_index < 0 || current_day_index >= 5) {
+        int next_day_index = get_next_day_index(current_day_index + 1);
+
+        if (schedule[next_day_index].num_classes > 0) {
+            class_index = 0;
+            struct tm next_day_tm = *now;
+            next_day_tm.tm_hour = schedule[next_day_index].classes[0].hour;
+            next_day_tm.tm_min = schedule[next_day_index].classes[0].minute;
+            next_day_tm.tm_sec = schedule[next_day_index].classes[0].second;
+            next_day_tm.tm_mday += 1;
+            mktime(&next_day_tm);
+
+            seconds_left = mktime(&next_day_tm) - ts;
+        }
+    }
 
     if (seconds_left != -1 && class_index != -1) {
         if (seconds_left == 30)
